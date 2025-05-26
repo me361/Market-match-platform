@@ -3,7 +3,7 @@ import { useState } from 'react';
 import DashboardCard from './DashboardCard';
 import BrowseListings from './BrowseListings';
 import SearchProducts from './SearchProducts';
-import PostBuyRequest from './PostBuyRequest';
+import PostBuyRequest from './PostBuyRequests';
 
 const BuyerDashboard = () => {
   const [activeTab, setActiveTab] = useState('browse');

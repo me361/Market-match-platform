@@ -2,26 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaMapMarkerAlt, FaStar } from 'react-icons/fa';
 import MessageDialog from './MessageDialog';
 import { products, location } from '../services/api';
+import { supabase } from '../supabaseClient';
 console.log('location object:', location);
-
-import { supabase } from '../supabaseClient'
-
-useEffect(() => {
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-
-    if (error) {
-      console.error('Error fetching products:', error)
-    } else {
-      console.log('Products:', data)
-    }
-  }
-
-  fetchProducts()
-}, [])
-
 
 const ProductCard = ({ product, onContactSeller }) => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform hover:scale-105">
@@ -60,7 +42,7 @@ const ProductCard = ({ product, onContactSeller }) => (
 
 const SearchProducts = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [location, setLocation] = useState('');
+  const [locationInput, setLocationInput] = useState('');
   const [coordinates, setCoordinates] = useState(null);
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
@@ -80,6 +62,25 @@ const SearchProducts = () => {
     'other'
   ];
 
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching products:', error);
+        setError('Failed to load products');
+      } else {
+        console.log('Products:', data);
+        setProducts(data || []);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   // Get user's location on component mount
   useEffect(() => {
     if (navigator.geolocation) {
@@ -94,15 +95,15 @@ const SearchProducts = () => {
           try {
             // Convert coordinates to address
             const address = await location.reverseGeocode(coords);
-            setLocation(address.formatted_address);
+            setLocationInput(address.formatted_address);
           } catch (error) {
             console.error('Error getting location:', error);
-            setLocation('');
+            setLocationInput('');
           }
         },
         (error) => {
           console.error('Error getting location:', error);
-          setLocation('');
+          setLocationInput('');
         }
       );
     }
@@ -116,9 +117,9 @@ const SearchProducts = () => {
       let searchCoordinates = coordinates;
 
       // If user entered a location, geocode it
-      if (location && (!coordinates || location !== 'Current Location')) {
+      if (locationInput && (!coordinates || locationInput !== 'Current Location')) {
         try {
-          const geocoded = await location.geocode(location);
+          const geocoded = await location.geocode(locationInput);
           searchCoordinates = {
             lat: geocoded.lat,
             lng: geocoded.lng
@@ -184,8 +185,8 @@ const SearchProducts = () => {
               <div className="relative">
                 <input
                   type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
                   placeholder="Enter location..."
                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
